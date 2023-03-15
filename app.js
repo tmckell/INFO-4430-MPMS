@@ -53,6 +53,7 @@ const authenticated_menu=[
     {label:"Admin Tools",id:"menu2", roles:["manager","owner","administrator"], menu:[
         {label:"Update User",function:"update_user()",panel:"update_user"},
     ]},
+    {label:"Project List",function:"navigate({fn:'show_project_list'})"},
 
 ]
 
@@ -687,3 +688,6 @@ async function employee_list(){
 
 }
 
+//async function show_project_list(){
+
+//}
