@@ -69,12 +69,12 @@ function show_home(){
         }
     }
 
-    //the main page is rendered with the Brooker's Ice cream logo. 
+    //the main page is rendered with the UVU Wolverine logo. 
 
     tag("canvas").innerHTML=` 
     <div class="center-screen">
     
-    <p><img height="${window.innerHeight * .6}" src="images/brookers-logo.png"></p>
+    <p><img height="${window.innerHeight * .6}" src="images/wolverine.png"></p>
     <div style="text-align:center"></div>
     
     
@@ -688,6 +688,68 @@ async function employee_list(){
 
 }
 
-//async function show_project_list(){
+async function show_project_list(){
+    console.log('in show_project_list')
 
-//}
+    //check if logged in
+    if(!logged_in()){show_home(); return}
+
+    //hide menu
+    hide_menu()
+
+    //build empty place on html page for display results
+    tag("canvas").innerHTML=` 
+    <div class="page">
+        <h2>Project List</h2>
+        <div id="member-list-message" style="padding-top:1rem;margin-bottom:1rem">
+        A list of all projects and their details.
+        </div>
+        <div id="employee_list_panel">
+        <i class="fas fa-spinner fa-pulse"></i>
+        </div>
+    </div>
+    `
+
+    //updates with spinning wheel
+    // tag("inventory-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+    
+    //send request to Google App Script to get project list function
+    const response=await server_request({
+        mode:"get_project_list",
+    })
+    // tag("inventory-message").innerHTML=''
+
+    if(response.status==="success"){//If the data is retrieved successfully, we proceed.
+        console.log("response", response)
+        
+        const header=[`
+        <table class="inventory-table">
+            <tr>
+            <th class="sticky">Name</th>
+            <th class="sticky">ProjectDetails</th>
+            <th class="sticky">Done</th>
+            `]
+
+        header.push("</tr>")
+        const html=[header.join("")]
+        console.log('html', html)
+
+        for (const record of response.records){
+            console.log('record', record)
+            html.push('<tr>')
+            html.push(`<td>${record.fields.Name}</td>`)
+            html.push(`<td>${record.fields.ProjectDetails}</td>`)
+            if(record.fields.Done){
+                html.push(`<td>${record.fields.Done}</td>`)
+            }else{
+                html.push(`<td>False</td>`)
+            }
+            html.push('</tr>')
+        }
+        
+        html.push('</table>')
+        tag("employee_list_panel").innerHTML= html.join("")
+        
+    }
+    
+}
