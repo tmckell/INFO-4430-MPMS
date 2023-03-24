@@ -34,13 +34,7 @@ const authenticated_menu=[
         //the user functions include the ability to change their password and edit their personal data
         {label:"Change Password",function:"change_password()",panel: "password_panel"},
         {label:"Personal Data",function:"navigate({fn:'personal_data'})"},
-    ]},
-    //This menu item allows the user to logout
-    {label:"Logout",function:"logout()", home:"Logout"},
-    //This menu item builds a sub menu that provides the user with the functionality to request time off and see their requests
-    {label:"Time Off",id:"menu1",menu:[
-        {label:"Request Time Off",function:"navigate({fn:'request_time_off'})"}, 
-        {label:"My Requests",function:"navigate({fn:'show_time_off'})"}, 
+        {label:"Logout",function:"logout()", home:"Logout"},
     ]},
     //This menu item allows the user to add additional users. Note the "roles" property of the object. Only users with the role of "manager", "owner", or "administrator" will see this menu item. User roles are not heirachical. All user types you wish to see a menu item must be listed in the elements of the array.
     {label:"Add Employee",function:"navigate({fn:'create_account'})", roles:["manager","owner","administrator"]}, 
@@ -54,6 +48,9 @@ const authenticated_menu=[
         {label:"Update User",function:"update_user()",panel:"update_user"},
     ]},
     {label:"Project List",function:"navigate({fn:'show_project_list'})"},
+
+
+
 
 ]
 
@@ -711,7 +708,7 @@ async function show_project_list(){
     `
 
     //updates with spinning wheel
-    // tag("inventory-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+    //tag("inventory-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
     
     //send request to Google App Script to get project list function
     const response=await server_request({
@@ -727,6 +724,7 @@ async function show_project_list(){
             <tr>
             <th class="sticky">Name</th>
             <th class="sticky">ProjectDetails</th>
+            <th class="sticky">ProjectType</th>
             <th class="sticky">Done</th>
             `]
 
@@ -739,6 +737,7 @@ async function show_project_list(){
             html.push('<tr>')
             html.push(`<td>${record.fields.Name}</td>`)
             html.push(`<td>${record.fields.ProjectDetails}</td>`)
+            html.push(`<td>${record.fields.ProjectType}</td>`)
             if(record.fields.Done){
                 html.push(`<td>${record.fields.Done}</td>`)
             }else{
@@ -746,10 +745,68 @@ async function show_project_list(){
             }
             html.push('</tr>')
         }
-        
+        html.push('<input type="button" class="tools" value="Add a new project" id="Show_Add_Inputs" onclick="show_add_project()"></input></br>')
+        html.push ('<input type="button" class="hidden" value="Hide new project options" id="hide_Add_Inputs" onclick="hide_add_project()"></input></br>')
+        html.push(
+            '<div class="hidden" id="Add_Project_textInputs">' +
+            '<form>' +
+            '<label>Project Name: </label>' +
+            '<input type="text" placeholder="Project Name" id="projectName"/>' + 
+            '<label>&emsp;Project details: </label>' +
+            '<textarea palceholder="Project Details" id="projectDetails"></textarea>' + 
+            '<label>&emsp;Project Type: </label>' +
+            '<select name="ProjectType" id="projectType">' +
+            '<option value="Repair">Repair</option> <option value="Upgrade">Upgrade</option> <option value="Clean">Clean</option> <option value="Build">Build</option>' +
+            '</select>' +
+            /* Front-side works, backend doesn't
+            '<label>&emsp;Business Name: </label>' +
+            '<input type="text" placeholder="Business Name" id="businessName"/>' + 
+            '</br>' +
+            '</br>' +
+            '<label>Shipment Number: </label>' +
+            '<input type="number" placeholder="Shipment Number" id="shipmentNumber"/>' + 
+            '<label>&emsp;Product(s) Needed: </label>' +
+            '<textarea palceholder="Product(s) Needed:" id="projectProducts"></textarea>' + 
+            '<label>&emsp;Customers Name: </label>' +
+            '<input type="text" placeholder="Customers Name" id="customerName"/>' + 
+            */
+            '<label>&emsp; Check if project is done <input type="checkbox" id="projectDone"/></label>' +
+            '</form>' +
+            '</div>' +
+            '</br>')
+        html.push('<input type="button" class="hidden" value="Add project" id="Add_Project" onclick="add_project()"></input>')
         html.push('</table>')
         tag("employee_list_panel").innerHTML= html.join("")
-        
     }
-    
+}
+async function show_add_project(){
+    document.getElementById('Add_Project_textInputs').className="show";
+    document.getElementById('Show_Add_Inputs').className="hidden";
+    document.getElementById('Add_Project').className="show";
+    document.getElementById('hide_Add_Inputs').className="show";
+}
+
+async function hide_add_project(){
+    document.getElementById('Add_Project_textInputs').className="hidden";
+    document.getElementById('Show_Add_Inputs').className="show";
+    document.getElementById('Add_Project').className="hidden";
+    document.getElementById('hide_Add_Inputs').className="hidden";
+}
+
+async function add_project(){
+    console.log('in add_project')
+    var nameVal = document.getElementById("projectName").value;
+    var detailsVal = document.getElementById("projectDetails").value;
+    var typeVal = document.getElementById("projectType").value;
+    /* Front-side works, backend doesn't
+    var businessVal = document.getElementById("businessName").value;
+    var shipmentVal = document.getElementById("shipmentNumber").value;
+    var prudctsVal = document.getElementById("projectProducts").value;
+    var customerVal = document.getElementById("customerName").value;
+    */
+    var doneVal = document.getElementById("projectDone").checked;
+    const response = await server_request({
+    mode:"add_new_project", name: nameVal, projectDetails: detailsVal, type: typeVal, /*business: businessVal, shipment: shipmentVal, products: prudctsVal, customer: customerVal, */done: doneVal,
+    })
+    show_project_list()
 }
