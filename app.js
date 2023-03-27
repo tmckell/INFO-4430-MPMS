@@ -726,6 +726,7 @@ async function show_project_list(){
             <th class="sticky">ProjectDetails</th>
             <th class="sticky">ProjectType</th>
             <th class="sticky">Done</th>
+            <th class="sticky">Action</th>
             `]
 
         header.push("</tr>")
@@ -743,6 +744,7 @@ async function show_project_list(){
             }else{
                 html.push(`<td>False</td>`)
             }
+            html.push(`<td><a class="tools" onclick="record_task('${record.id}')">Mark as Complete</a></td>`)
             html.push('</tr>')
         }
         html.push('<input type="button" class="tools" value="Add a new project" id="Show_Add_Inputs" onclick="show_add_project()"></input></br>')
@@ -807,6 +809,14 @@ async function add_project(){
     var doneVal = document.getElementById("projectDone").checked;
     const response = await server_request({
     mode:"add_new_project", name: nameVal, projectDetails: detailsVal, type: typeVal, /*business: businessVal, shipment: shipmentVal, products: prudctsVal, customer: customerVal, */done: doneVal,
+    })
+    show_project_list()
+}
+
+async function record_task(record_id){
+    console.log('in record_task')
+    const response = await server_request({
+    mode:"record_task_done", id: record_id,
     })
     show_project_list()
 }
