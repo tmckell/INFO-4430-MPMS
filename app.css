@@ -2,15 +2,15 @@ html {zoom: 100%;}
 
 body{
     padding:0;
-    background-color: ivory;
+    background-color: rgb(60, 33, 134);
     text-align: left;
     min-width: 200px;
 }
 
 h1 {
-    color: maroon;
+    color: rgb(212, 205, 205);
     text-shadow: -1px 0 black, 0 1px black, 1px 0 black, 0 -1px black;
-    font-size: 2rem;
+    font-size: 4rem;
     line-height: 2rem;
     text-align: center;
 }
@@ -46,7 +46,7 @@ h2{
 }
 
 #welcome p{
-    line-height: 1.1rem;
+    line-height: 4rem;
     font-weight: bold;
 }
 
@@ -54,7 +54,7 @@ h2{
     cursor: pointer; 
     /*background-color:white; */
     color:black; 
-    padding:4px;
+    padding:20px;
     margin:0;
     /*font-size: 1.2rem;*/
 }
@@ -90,7 +90,7 @@ h2{
 }
 
 .working{
-    background-image: url(images/progresswheel.gif);
+    background-image: url(images/projectmang1.png);
     background-position: left;
     background-size: 20px;
     background-repeat: no-repeat;
