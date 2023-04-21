@@ -10,6 +10,11 @@ const nav_menu = [
   { label: "Businesses", function: "navigate({fn:'show_locations'})" },
   //Project list menu item - Taylor
   { label: "Project List", function: "navigate({fn:'show_project_list'})" },
+  { label: "Product List", function: "navigate({fn:'show_prod_list'})"},
+  { label: "Shipment List", function: "navigate({fn:'show_ship_list'})"},
+  { label: "Customer List", function: "navigate({fn:'show_cus_list'})"},
+
+  
 ];
 
 //This global variable sets the menu items for an unautheticated user.
@@ -100,41 +105,6 @@ async function show_locations() {
   tag(
     "canvas"
   ).innerHTML = `<div class="center-screen"><iframe class="airtable-embed" src="https://airtable.com/embed/${show_locations_share}?backgroundColor=blue&layout=card&viewControls=on" frameborder="0" onmousewheel="" width="100%" height="533" style="background: transparent; border: 1px solid #ccc;"></iframe></div>`;
-  hide_menu();
-}
-
-async function request_time_off() {
-  //This is an example of embedding a data form that is created in Airtable. This form allows a user to make a "time off" request. This form is not secure. Anyone with the link or the id for the form can use it to enter data into Airtable. However, it is easy to build and share an Airtable form.
-  if (!logged_in()) {
-    show_home();
-    return;
-  }
-  const width = 300;
-  //This form is configured to accept a parameter of the user that is requesting time off. All this means is that the Airtable form, when rendered, will populate with the appropriate user. The user can still change that information and request time off for any user stored in Airtable.
-  const url = `https://airtable.com/embed/${request_time_off_share}?prefill_employee=${
-    get_user_data().id
-  }`;
-  console.log("url", url, get_user_data());
-  tag(
-    "canvas"
-  ).innerHTML = `<div class="center-screen"><iframe class="airtable-embed" src="${url}" frameborder="0" onmousewheel="" width="${width}" height="500" style="background-color: white; border: 1px solid #ccc;"></iframe></div>`;
-  hide_menu();
-}
-
-async function show_time_off() {
-  //Another example of rendering data directly from Airtable. This function will display the time off requests for a particular employee
-  if (!logged_in()) {
-    show_home();
-    return;
-  }
-  const width = 300;
-  const user_data = get_user_data();
-  //notice the filter added to this URL. This filter will be applied to the table in Airtable and will only display the items defined by the filter.
-  const url = `https://airtable.com/embed/${show_time_off_share}?filter_employee=${user_data.first_name}+${user_data.last_name}`;
-  console.log("url", url, get_user_data());
-  tag(
-    "canvas"
-  ).innerHTML = `<div class="center-screen"><iframe class="airtable-embed" src="${url}" frameborder="0" onmousewheel="" width="${width}" height="500" style="background-color: white; border: 1px solid #ccc;"></iframe></div>`;
   hide_menu();
 }
 
@@ -662,92 +632,6 @@ async function update_observation(entry) {
   }
 }
 
-async function employee_list() {
-  //this function displays an employee list. If the user role allows, the option to update the user record in Google App Script is presented
-  //Note: user information is stored in Airtable. However, to avoid the need to repeatedly access Airtable to retrieve user information, a record is stored in Google App Script. This record must be updated when changes are made to user information in Airtable, thus the need for user information to be updated.
-  if (!logged_in()) {
-    show_home();
-    return;
-  } //in case followed a link after logging out
-  hide_menu();
-  //Build the HTML placeholders for the employee data.
-  tag("canvas").innerHTML = ` 
-    <div class="page">
-        <h2>Employee List</h2>
-        <div id="member-list-message" style="padding-top:1rem;margin-bottom:1rem">
-        Employee information is private and should not be shared.
-        </div>
-        <div id="employee_list_panel">
-        <i class="fas fa-spinner fa-pulse"></i>
-        </div>
-    </div>
-    `;
-
-  //retrieve the employee data using the local server_request function to request the Google App Script function "employee_list" retrieve the employee data.
-  const response = await server_request({
-    mode: "employee_list",
-    filter: "",
-  });
-
-  //build the standard headers for the employee table
-  const labels = {
-    first_name: "First Name",
-    last_name: "Last Name",
-    email: "Email",
-    phone: "Phone",
-  };
-
-  //determine if the user has a role that allows for employee updates.
-  const is_admin =
-    intersect(get_user_data().roles, ["administrator", "owner", "manager"])
-      .length > 0;
-
-  if (response.status === "success") {
-    const html = ['<table style="background-color:white"><tr>'];
-    //add the standard headers to the table
-    for (const field of response.fields) {
-      html.push("<th>");
-      html.push(labels[field]);
-      html.push("</th>");
-    }
-    //If the role is sufficient to perform employee updates, add the header "Action"
-    if (is_admin) {
-      html.push("<th>Action</th>");
-    }
-    html.push("</tr>");
-
-    //process through the employee records that were returned and add them to the table.
-    for (const record of response.records) {
-      html.push("<tr>");
-      console.log(record);
-      for (const field of response.fields) {
-        if (record.fields[field] === "withheld") {
-          html.push('<td style="color:lightgray">');
-        } else {
-          html.push("<td>");
-        }
-        html.push(record.fields[field]);
-        html.push("</td>");
-      }
-      //If the user is able to perform employee updates, add a button that allows them update employees
-      if (is_admin) {
-        html.push("<td>");
-        html.push(
-          `<a class="tools" onclick="update_user({email:'${record.fields.email}', button:'Update User', mode:'update_user'},tag('member-list-message'))">Update</a>`
-        );
-        html.push("</td>");
-      }
-      html.push("</tr>");
-    }
-    html.push("</table>");
-
-    tag("employee_list_panel").innerHTML = html.join("");
-  } else {
-    tag("employee_list_panel").innerHTML =
-      "Unable to get member list: " + response.message + ".";
-  }
-}
-
 async function show_project_list() {
   console.log("in show_project_list");
 
@@ -913,3 +797,205 @@ async function record_task(record_id) {
   });
   show_project_list();
 }
+
+async function show_ship_list() {
+    console.log("in show_ship_list");
+  
+    //check if logged in
+    if (!logged_in()) {
+      show_home();
+      return;
+    }
+  
+    //hide menu
+    hide_menu();
+  
+    //build empty place on html page for display results
+    tag("canvas").innerHTML = ` 
+      <div class="page">
+          <h2>Shipment List</h2>
+          <div id="member-list-message" style="padding-top:1rem;margin-bottom:1rem">
+          A list of all shipments and their details.
+          </div>
+          <div id="employee_list_panel">
+          <i class="fas fa-spinner fa-pulse"></i>
+          </div>
+      </div>
+      `;
+  
+    //updates with spinning wheel
+    //tag("inventory-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+  
+    //send request to Google App Script to get project list function
+    const response = await server_request({
+      mode: "get_ship_list",
+    });
+    // tag("inventory-message").innerHTML=''
+  
+    if (response.status === "success") {
+      //If the data is retrieved successfully, we proceed.
+      console.log("response", response);
+  
+      const header = [
+        `
+          <table class="inventory-table">
+              <tr>
+              <th class="sticky">Tracking Number</th>
+              <th class="sticky">Depart Date</th>
+              <th class="sticky">Arrival Date</th>
+              <th class="sticky">Project</th>
+              `,
+      ];
+  
+      header.push("</tr>");
+      const html = [header.join("")];
+      console.log("html", html);
+  
+      for (const record of response.records) {
+        console.log("record", record);
+        html.push("<tr>");
+        html.push(`<td>${record.fields.TrackingNumber}</td>`);
+        html.push(`<td>${record.fields.DepartDate}</td>`);
+        html.push(`<td>${record.fields.ArrivalDate}</td>`);
+        html.push(`<td>${record.fields.ProjectName}</td>`);
+        
+        html.push("</tr>");
+      }
+      tag("employee_list_panel").innerHTML = html.join("");
+    }
+  }
+
+  async function show_prod_list() {
+    console.log("in show_prod_list");
+  
+    //check if logged in
+    if (!logged_in()) {
+      show_home();
+      return;
+    }
+  
+    //hide menu
+    hide_menu();
+  
+    //build empty place on html page for display results
+    tag("canvas").innerHTML = ` 
+      <div class="page">
+          <h2>Product List</h2>
+          <div id="member-list-message" style="padding-top:1rem;margin-bottom:1rem">
+          A list of all products and their amounts.
+          </div>
+          <div id="employee_list_panel">
+          <i class="fas fa-spinner fa-pulse"></i>
+          </div>
+      </div>
+      `;
+  
+    //updates with spinning wheel
+    //tag("inventory-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+  
+    //send request to Google App Script to get project list function
+    const response = await server_request({
+      mode: "get_prod_list",
+    });
+    // tag("inventory-message").innerHTML=''
+  
+    if (response.status === "success") {
+      //If the data is retrieved successfully, we proceed.
+      console.log("response", response);
+  
+      const header = [
+        `
+          <table class="inventory-table">
+              <tr>
+              <th class="sticky">Product</th>
+              <th class="sticky">Quantity</th>
+              `,
+      ];
+  
+      header.push("</tr>");
+      const html = [header.join("")];
+      console.log("html", html);
+  
+      for (const record of response.records) {
+        console.log("record", record);
+        html.push("<tr>");
+        html.push(`<td>${record.fields.Name}</td>`);
+        html.push(`<td>${record.fields.Number}</td>`);
+        
+        html.push("</tr>");
+      }
+      tag("employee_list_panel").innerHTML = html.join("");
+    }
+  }
+
+  async function show_cus_list() {
+    console.log("in show_prod_list");
+  
+    //check if logged in
+    if (!logged_in()) {
+      show_home();
+      return;
+    }
+  
+    //hide menu
+    hide_menu();
+  
+    //build empty place on html page for display results
+    tag("canvas").innerHTML = ` 
+      <div class="page">
+          <h2>Customer List</h2>
+          <div id="member-list-message" style="padding-top:1rem;margin-bottom:1rem">
+          A list of all customers and their details.
+          </div>
+          <div id="employee_list_panel">
+          <i class="fas fa-spinner fa-pulse"></i>
+          </div>
+      </div>
+      `;
+  
+    //updates with spinning wheel
+    //tag("inventory-message").innerHTML='<i class="fas fa-spinner fa-pulse"></i>'
+  
+    //send request to Google App Script to get project list function
+    const response = await server_request({
+      mode: "get_cus_list",
+    });
+    // tag("inventory-message").innerHTML=''
+  
+    if (response.status === "success") {
+      //If the data is retrieved successfully, we proceed.
+      console.log("response", response);
+  
+      const header = [
+        `
+          <table class="inventory-table">
+              <tr>
+              <th class="sticky">First Name</th>
+              <th class="sticky">Last Name</th>
+              <th class="sticky">Address</th>
+              <th class="sticky">City</th>
+              <th class="sticky">State</th>
+              <th class="sticky">Zipcode</th>
+              <th class="sticky">Project</th>
+              `,
+      ];
+  
+      header.push("</tr>");
+      const html = [header.join("")];
+      console.log("html", html);
+  
+      for (const record of response.records) {
+        console.log("record", record);
+        html.push("<tr>");
+        html.push(`<td>${record.fields.FirstName}</td>`);
+        html.push(`<td>${record.fields.LastName}</td>`);
+        html.push(`<td>${record.fields.Address}</td>`);
+        html.push(`<td>${record.fields.City}</td>`);
+        html.push(`<td>${record.fields.State}</td>`);
+        html.push(`<td>${record.fields.ZipCode}</td>`);
+        html.push(`<td>${record.fields.ProjectName}</td>`);
+        html.push("</tr>");
+      }
+      tag("employee_list_panel").innerHTML = html.join("");
+    }
+  }
