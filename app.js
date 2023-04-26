@@ -929,7 +929,7 @@ async function show_ship_list() {
   }
 
   async function show_cus_list() {
-    console.log("in show_prod_list");
+    console.log("in show_cus_list");
   
     //check if logged in
     if (!logged_in()) {
